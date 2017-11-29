@@ -1,0 +1,649 @@
+<html>
+<head>
+<style>
+#rootLegend{
+	display: block;
+	position: absolute;
+	float: right;
+	background: white;
+	color: black;
+    margin-left : 1600px;
+    margin-top  : 0px; 
+	border: 1px solid Black;
+	height: 200px;
+	width: 160px;
+}
+.svgBinStyle {
+	display: block;
+	position: relative;
+	background: white;
+	color: black;
+	margin-left : 250px; 
+	margin-top  : 200px;
+	border: 1px solid Black;
+	height: 200px;
+	width: 1300px;
+}
+#abnormalCost{
+	display: block;
+	position: relative;
+	background: white;
+	color: black;
+    margin-left : 250px;
+    margin-top  : 20px; 
+	border: 1px solid Black;
+	height: 200px;
+	width: 1300px;
+}
+.svgStyle {
+	display: block;
+	position: relative;
+	background: white;
+	color: black;
+	margin-left : 250px; 
+	margin-top  : 20px;
+	border: 1px solid Black;
+	height: 200px;
+	width: 1300px;
+}
+
+.motext{color:black;height: 20px;
+	width: 796px;
+}
+ul {
+    list-style-type: none;
+    margin-top: 150px;
+    padding: 0;
+    width: 200px;
+    background-color: #f1f1f1;
+}
+
+li a {
+    display: block;
+    color: #000;
+    padding: 8px 16px;
+    text-decoration: none;
+}
+
+li a.active {
+    background-color: #4CAF50;
+    color: white;
+}
+
+li a:hover:not(.active) {
+    background-color: #555;
+    color: white;
+}
+</style>
+
+</head>
+
+<body>
+<div>
+<!--  <div >
+<ul>
+  <li><a class="active" href="#">case1</a></li>
+  <li><a href="#">case2</a></li>
+  <li><a href="#">case3</a></li>
+  <li><a href="#">case4</a></li>
+</ul>
+</div>-->
+<div id="legend"></div>
+<div id="svgWav" >
+</div>
+<div id="svgFeature">
+</div>
+<div id="svgFeature2">
+</div>
+
+</div>
+</body>
+</html>
+<script type="text/javascript"
+	src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+<script type="text/javascript">
+
+
+
+const POINT_STEP=8;
+const POINT_STEP2=2;
+const SCALE=80;
+const BIN_SCALE=40;
+const SPACE=50;
+const LEFT_CHART_PADDING=50;
+const BIN_SPACE=100;
+
+const lineSz = 150;
+const lineBinSz=1200;
+const LINE_SIZE2=600;
+
+var step=0;
+var stepBin=0;
+
+var predict= new Array();
+var target = new Array();
+var abflag = new Array();
+var cost =new Array();
+
+var predict2= new Array();
+var target2 = new Array();
+var abflag2 = new Array();
+var cost2 =new Array();
+
+var wave   = new Array();
+
+
+for(var i=0;i<lineSz;i++){
+	predict[i]=1;
+	 target[i]=1;
+	 abflag[i]=0;
+	 cost[i]=0;
+}
+
+for(var i=0;i<LINE_SIZE2;i++){
+	predict2[i]=1;
+	 target2[i]=1;
+	 abflag2[i]=0;
+	 cost2[i]=0;
+}
+
+for(var i=0; i< lineBinSz;i++){
+	wave[i] =1;
+}
+
+
+function initView() {
+
+	////////////////////////////////////////////////////  
+	//wav root
+	var svgWav= document.getElementById('svgWav'); 
+    var rootSvgBin = document.createElementNS("http://www.w3.org/2000/svg", "svg");    
+    svgWav.appendChild(rootSvgBin);
+    rootSvgBin.setAttributeNS(null, "id", "rootSvgBin");
+    rootSvgBin.setAttributeNS(null, "class", "svgBinStyle");
+
+	//x축
+    for(var i=0;i<(lineSz/20+1);i++)
+    {
+        var moText = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        rootSvgBin.appendChild(moText);
+        moText.setAttribute("id", "moText");
+        moText.setAttribute("y", "180");
+        moText.setAttribute("x", 150*i+LEFT_CHART_PADDING );
+        moText.setAttribute("font-size", "20");
+        moText.setAttribute("font-color", "black");
+        moText.textContent = (i*150) ;
+    }
+    //y축
+    var moText1 = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    rootSvgBin.appendChild(moText1);
+    moText1.setAttribute("id", "moText");
+    moText1.setAttribute("y", 50 );
+    moText1.setAttribute("x", LEFT_CHART_PADDING-10);
+    moText1.setAttribute("font-size", "20");
+    moText1.setAttribute("font-color", "black");
+    moText1.textContent = 1 ;
+    var moText1 = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    rootSvgBin.appendChild(moText1);
+    moText1.setAttribute("id", "moText");
+    moText1.setAttribute("y", 100 );
+    moText1.setAttribute("x", LEFT_CHART_PADDING-10);
+    moText1.setAttribute("font-size", "20");
+    moText1.setAttribute("font-color", "black");
+    moText1.textContent = 0 ;
+    var moText1 = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    rootSvgBin.appendChild(moText1);
+    moText1.setAttribute("id", "moText");
+    moText1.setAttribute("y", 150 );
+    moText1.setAttribute("x", (LEFT_CHART_PADDING-15));
+    moText1.setAttribute("font-size", "20");
+    moText1.setAttribute("font-color", "black");
+    moText1.textContent = -1 ;
+    var wave = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    var lineStr = "";
+    rootSvgBin.appendChild(wave);
+    wave.setAttribute("id", "wavePathLine");
+    wave.setAttribute("class", "lineStyle");
+    wave.setAttribute("d", lineStr);
+    wave.setAttribute("stroke", "purple");
+    wave.setAttribute("stroke-width", "1");
+    wave.setAttribute("fill", "none");
+    
+    var wText = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    rootSvgBin.appendChild(wText);
+    wText.setAttribute("id", "orderBin");
+    wText.setAttribute("y", "30" );
+    wText.setAttribute("x", "1200");
+    wText.setAttribute("font-size", "25");
+    wText.setAttribute("font-color", "black");
+    wText.textContent = "Wave" ;
+  
+
+	////////////////////////////////////
+    // feature root 
+    var feature= document.getElementById('svgFeature');
+    var rootSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");    
+    feature.appendChild(rootSvg);
+    rootSvg.setAttributeNS(null, "id", "rootSvg");
+    rootSvg.setAttributeNS(null, "class", "svgStyle");
+  //x축
+    for(var i=0;i<(lineSz/20+1);i++)
+    {
+        var moText = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        rootSvg.appendChild(moText);
+        moText.setAttribute("id", "moText");
+        moText.setAttribute("y", "180");
+        moText.setAttribute("x", POINT_STEP*30*i+LEFT_CHART_PADDING );
+        moText.setAttribute("font-size", "20");
+        moText.setAttribute("font-color", "black");
+        moText.textContent = (i*30) ;
+    }
+    //y축
+    var moText1 = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    rootSvg.appendChild(moText1);
+    moText1.setAttribute("id", "moText");
+    moText1.setAttribute("y", 50 );
+    moText1.setAttribute("x", LEFT_CHART_PADDING-10);
+    moText1.setAttribute("font-size", "20");
+    moText1.setAttribute("font-color", "black");
+    moText1.textContent = 1 ;
+    var moText1 = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    rootSvg.appendChild(moText1);
+    moText1.setAttribute("id", "moText");
+    moText1.setAttribute("y", 100 );
+    moText1.setAttribute("x", LEFT_CHART_PADDING-10);
+    moText1.setAttribute("font-size", "20");
+    moText1.setAttribute("font-color", "black");
+    moText1.textContent = 0 ;
+    var moText1 = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    rootSvg.appendChild(moText1);
+    moText1.setAttribute("id", "moText");
+    moText1.setAttribute("y", 150 );
+    moText1.setAttribute("x", LEFT_CHART_PADDING-15);
+    moText1.setAttribute("font-size", "20");
+    moText1.setAttribute("font-color", "black");
+    moText1.textContent = -1 ;
+    //line
+	var abnomalFlag = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    var lineStr = "";
+    rootSvg.appendChild(abnomalFlag);
+    abnomalFlag.setAttribute("id", "abnomalFlagBar");
+    abnomalFlag.setAttribute("class", "lineStyle");
+    abnomalFlag.setAttribute("d", lineStr);
+    abnomalFlag.setAttribute("stroke", "yellow");
+    abnomalFlag.setAttribute("stroke-width", "1");
+    abnomalFlag.setAttribute("fill", "yellow");
+    var predictLine = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    var lineStr = "";
+    rootSvg.appendChild(predictLine);
+    predictLine.setAttribute("id", "predictPathLine");
+    predictLine.setAttribute("class", "lineStyle");
+    predictLine.setAttribute("d", lineStr);
+    predictLine.setAttribute("stroke", "blue");
+    predictLine.setAttribute("stroke-width", "1");
+    predictLine.setAttribute("fill", "none");
+    var targetLine = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    var lineStr = "";
+    rootSvg.appendChild(targetLine);
+    targetLine.setAttribute("id", "targetPathLine");
+    targetLine.setAttribute("class", "lineStyle");
+    targetLine.setAttribute("d", lineStr);
+    targetLine.setAttribute("stroke", "red");
+    targetLine.setAttribute("stroke-width", "1");
+    targetLine.setAttribute("fill", "none");
+
+    //갯수
+    var moText = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    rootSvg.appendChild(moText);
+    moText.setAttribute("id", "order");
+    moText.setAttribute("y", "30" );
+    moText.setAttribute("x", "1220");
+    moText.setAttribute("font-size", "25");
+    moText.setAttribute("font-color", "black");
+    moText.textContent = "200" ;
+
+    //////////////////////////
+    //abnormalCost#abnormalCost
+    // feature root 
+    var feature= document.getElementById('svgFeature2');
+    var rootSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");    
+    feature.appendChild(rootSvg);
+    rootSvg.setAttributeNS(null, "id", "abnormalCost");
+    rootSvg.setAttributeNS(null, "class", "abnormalCost");
+  //x축
+    for(var i=0;i<(lineSz/20+1);i++)
+    {
+        var moText = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        rootSvg.appendChild(moText);
+        moText.setAttribute("id", "moText");
+        moText.setAttribute("y", "180");
+        moText.setAttribute("x", POINT_STEP*30*i+LEFT_CHART_PADDING );
+        moText.setAttribute("font-size", "20");
+        moText.setAttribute("font-color", "black");
+        moText.textContent = (i*30*4) ;
+    }
+
+    //y축
+    var moText1 = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    rootSvg.appendChild(moText1);
+    moText1.setAttribute("id", "moText");
+    moText1.setAttribute("y", 50 );
+    moText1.setAttribute("x", LEFT_CHART_PADDING-10);
+    moText1.setAttribute("font-size", "20");
+    moText1.setAttribute("font-color", "black");
+    moText1.textContent = 1 ;
+    var moText1 = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    rootSvg.appendChild(moText1);
+    moText1.setAttribute("id", "moText");
+    moText1.setAttribute("y", 100 );
+    moText1.setAttribute("x", LEFT_CHART_PADDING-10);
+    moText1.setAttribute("font-size", "20");
+    moText1.setAttribute("font-color", "black");
+    moText1.textContent = 0 ;
+    var moText1 = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    rootSvg.appendChild(moText1);
+    moText1.setAttribute("id", "moText");
+    moText1.setAttribute("y", 150 );
+    moText1.setAttribute("x", LEFT_CHART_PADDING-15);
+    moText1.setAttribute("font-size", "20");
+    moText1.setAttribute("font-color", "black");
+    moText1.textContent = -1 ;
+	var abnomalFlag = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    var lineStr = "";
+    rootSvg.appendChild(abnomalFlag);
+    abnomalFlag.setAttribute("id", "abnomalFlagBar2");
+    abnomalFlag.setAttribute("class", "lineStyle");
+    abnomalFlag.setAttribute("d", lineStr);
+    abnomalFlag.setAttribute("stroke", "yellow");
+    abnomalFlag.setAttribute("stroke-width", "1");
+    abnomalFlag.setAttribute("fill", "yellow");
+    var predictLine = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    var lineStr = "";
+    rootSvg.appendChild(predictLine);
+    predictLine.setAttribute("id", "predictPathLine2");
+    predictLine.setAttribute("class", "lineStyle");
+    predictLine.setAttribute("d", lineStr);
+    predictLine.setAttribute("stroke", "blue");
+    predictLine.setAttribute("stroke-width", "1");
+    predictLine.setAttribute("fill", "none");
+    var targetLine = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    var lineStr = "";
+    rootSvg.appendChild(targetLine);
+    targetLine.setAttribute("id", "targetPathLine2");
+    targetLine.setAttribute("class", "lineStyle");
+    targetLine.setAttribute("d", lineStr);
+    targetLine.setAttribute("stroke", "red");
+    targetLine.setAttribute("stroke-width", "1");
+    targetLine.setAttribute("fill", "none");
+
+    //갯수
+    var moText = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    rootSvg.appendChild(moText);
+    moText.setAttribute("id", "order2");
+    moText.setAttribute("y", "30");
+    moText.setAttribute("x",1220 );
+    moText.setAttribute("font-size", "25");
+    moText.setAttribute("font-color", "black");
+    moText.textContent = "200" ;
+
+  //legend root
+	var legend= document.getElementById('legend'); 
+    var rootLegend = document.createElementNS("http://www.w3.org/2000/svg", "svg");    
+    legend.appendChild(rootLegend);
+    rootLegend.setAttributeNS(null, "id", "rootLegend");
+    rootLegend.setAttributeNS(null, "class", "svgLegendStyle");
+    
+    var circleW = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    rootLegend.appendChild(circleW);
+    circleW.setAttribute("cx", "15");
+    circleW.setAttribute("cy", "30");
+    circleW.setAttribute("r", "2");
+    circleW.setAttribute("stroke", "purple");
+    circleW.setAttribute("stroke-width", "1");
+    circleW.setAttribute("fill", "purple");
+    var rtext = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    rootLegend.appendChild(rtext);
+    rtext.setAttribute("id", "rtext");
+    rtext.setAttribute("y", "33" );
+    rtext.setAttribute("x", "35");
+    rtext.setAttribute("font-size", "15");
+    rtext.setAttribute("font-color", "black");
+    rtext.textContent = "Wave" ;
+    
+    var circleW = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    rootLegend.appendChild(circleW);
+    circleW.setAttribute("cx", "15");
+    circleW.setAttribute("cy", "60");
+    circleW.setAttribute("r", "2");
+    circleW.setAttribute("stroke", "red");
+    circleW.setAttribute("stroke-width", "1");
+    circleW.setAttribute("fill", "red");
+    var rtext = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    rootLegend.appendChild(rtext);
+    rtext.setAttribute("id", "rtext");
+    rtext.setAttribute("y", "63" );
+    rtext.setAttribute("x", "35");
+    rtext.setAttribute("font-size", "15");
+    rtext.setAttribute("font-color", "black");
+    rtext.textContent = "Target" ;
+    
+    var circleW = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    rootLegend.appendChild(circleW);
+    circleW.setAttribute("cx", "15");
+    circleW.setAttribute("cy", "90");
+    circleW.setAttribute("r", "2");
+    circleW.setAttribute("stroke", "blue");
+    circleW.setAttribute("stroke-width", "1");
+    circleW.setAttribute("fill", "blue");
+    var rtext = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    rootLegend.appendChild(rtext);
+    rtext.setAttribute("id", "rtext");
+    rtext.setAttribute("y", "93" );
+    rtext.setAttribute("x", "35");
+    rtext.setAttribute("font-size", "15");
+    rtext.setAttribute("font-color", "black");
+    rtext.textContent = "Predict" ;
+
+    var circleW = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    rootLegend.appendChild(circleW);
+    circleW.setAttribute("cx", "15");
+    circleW.setAttribute("cy", "120");
+    circleW.setAttribute("r", "2");
+    circleW.setAttribute("stroke", "yellow");
+    circleW.setAttribute("stroke-width", "1");
+    circleW.setAttribute("fill", "yellow");
+    var rtext = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    rootLegend.appendChild(rtext);
+    rtext.setAttribute("id", "rtext");
+    rtext.setAttribute("y", "123" );
+    rtext.setAttribute("x", "35");
+    rtext.setAttribute("font-size", "15");
+    rtext.setAttribute("font-color", "black");
+    rtext.textContent = "Abnormal Flag" ;
+
+
+}
+
+
+function getLineStr(ys, size) {
+
+	var lineStr = "M " + LEFT_CHART_PADDING + " " + (ys[0]*SCALE+SPACE);//10
+        
+    for (var i=1; i < size; i++) {
+    	lineStr = lineStr + " L " + (i *POINT_STEP+LEFT_CHART_PADDING ) + " " + (ys[i]*SCALE+SPACE);
+    }
+    return lineStr;
+}
+
+function getLineStr2(ys, size) {
+
+	var lineStr = "M " + LEFT_CHART_PADDING + " " + (ys[0]*SCALE+SPACE);//10
+        
+    for (var i=1; i < size; i++) {
+    	lineStr = lineStr + " L " + (i*POINT_STEP2 + LEFT_CHART_PADDING ) + " " + (ys[i]*SCALE+SPACE);
+    }
+    return lineStr;
+}
+
+function getLineBinStr(ys,size) {
+
+	var lineStr = "M " + LEFT_CHART_PADDING + " " + (ys[0]*BIN_SCALE+BIN_SPACE);//80 
+        
+    for (var i=1; i < size; i++) {
+    	lineStr = lineStr + " L " + (i+LEFT_CHART_PADDING) + " " + (ys[i]*BIN_SCALE+BIN_SPACE);
+    }
+    return lineStr;
+}
+
+
+function getDataBin() {
+	var array= new Array();
+	if(stepBin!=0){
+		url="getDataBin.php?step="+stepBin;
+	}else{
+		url="getDataBin.php";
+	}
+		
+	var jsonData = $.ajax({
+		url : url,
+		dataType : "json",
+		success: function(dt){
+			$.each(dt,function(key,val){
+				for(var i=0;i<val.length;i++)
+					array.push(val[i]);	
+			});
+			stepBin=dt.step;
+		},
+		async : false
+	}).responseText;
+	return array;
+}
+function getData() {
+	var array= new Array();
+	if(step!=0){
+		url="getData.php?step="+step+"&time="+time;
+	}else{
+		url="getData.php";
+	}	
+	var jsonData = $.ajax({
+		url : url,
+		dataType : "json",
+		success: function(dt){
+			$.each(dt,function(key,val){
+				if(!null){
+					for(var i=0;i<val.length;i++)
+					{
+						array.push(val[i]);
+					}
+				}else{ return 0;}
+				
+			});
+			 step=dt.step;
+			 time=dt.time;
+		},
+		async : false
+	}).responseText;
+	return array;
+}
+
+
+var waveLineStr="";
+async function moveLine() {
+
+	
+    var predictLine = document.getElementById("predictPathLine");
+    var tagetLine = document.getElementById("targetPathLine");
+    var abnormal  = document.getElementById("abnomalFlagBar");
+
+    var predictLine2 = document.getElementById("predictPathLine2");
+    var tagetLine2 = document.getElementById("targetPathLine2");
+    var abnormal2  = document.getElementById("abnomalFlagBar2");
+    
+	var waveLine  = document.getElementById("wavePathLine");
+	
+	
+	var abflagStr="";
+	var abflagStr2="";
+ 	
+//console.log(performance.now());
+    var array= getData();  
+    var arrayBin= getDataBin();
+    if(!isNaN(array[0]) && array!=0){
+     
+    predict.shift();
+    target.shift();
+    cost.shift();
+    abflag.shift();
+    
+    predict.push(parseFloat(array[0]));
+    target.push(array[1]);
+    cost.push(array[2]);
+    abflag.push(array[3]);
+
+	for(var i=0;i<POINT_STEP;i++)
+	{
+		wave.shift();
+		wave.push(arrayBin[i]);
+	}
+	predict2.shift();
+	    target2.shift();
+	    cost2.shift();
+	    abflag2.shift();
+	    predict2.push(array[0]);
+	    target2.push(array[1]);
+	    cost2.push(array[2]);
+	    abflag2.push(array[3]);		
+	
+	
+    predictLineStr = getLineStr(predict, lineSz);
+    targetLineStr  = getLineStr(target, lineSz);
+    
+    predictLineStr2 = getLineStr2(predict2, LINE_SIZE2);
+    targetLineStr2  = getLineStr2(target2, LINE_SIZE2);
+    
+    for(var i=0; i<lineSz; i++){
+		if(abflag[i]==1)
+		{
+			abflagStr = abflagStr + "M " + (i*POINT_STEP+LEFT_CHART_PADDING-1) +" 150 L " +(i*POINT_STEP+1+LEFT_CHART_PADDING)+" 150 L " +(i*POINT_STEP+1+LEFT_CHART_PADDING) +" 50 L "+(i*POINT_STEP-1+LEFT_CHART_PADDING)+" 50 z ";			
+		}
+	}
+    for(var i=0; i<LINE_SIZE2; i++){
+		if(abflag2[i]==1)
+		{
+			abflagStr2 = abflagStr2 + "M " + (i*POINT_STEP2+LEFT_CHART_PADDING-1) +" 150 L " +(i*POINT_STEP2+1+LEFT_CHART_PADDING)+" 150 L " +(i*POINT_STEP2+1+LEFT_CHART_PADDING) +" 50 L "+(i*POINT_STEP2-1+LEFT_CHART_PADDING)+" 50 z ";
+			
+		}
+	}
+	
+    
+    //8개씩 변형
+    waveLineStr = getLineBinStr(wave, lineBinSz);
+    document.getElementById("order").textContent=time;
+    document.getElementById("order2").textContent=time;
+	document.getElementById("orderBin").textContent=(stepBin*8);
+	
+    predictLine.setAttribute("d", predictLineStr);   //문제 
+    tagetLine.setAttribute("d", targetLineStr); //문제
+    abnormal.setAttribute("d", abflagStr);
+    
+    predictLine2.setAttribute("d", predictLineStr2);  //문제  
+    tagetLine2.setAttribute("d", targetLineStr2);//문제
+    abnormal2.setAttribute("d", abflagStr2);
+    
+    waveLine.setAttribute("d", waveLineStr);
+    }
+}
+
+function init() {
+	
+    initView();
+   
+  	setInterval(moveLine,1);//32=>6초대...
+  	
+    
+}
+
+    init();
+
+
+    </script>

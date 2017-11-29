@@ -1,0 +1,98 @@
+<html>
+<head>
+<!--Load the AJAX API-->
+<script type="text/javascript"
+	src="https://www.gstatic.com/charts/loader.js"></script>
+<script type="text/javascript"
+	src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+<script type="text/javascript">
+
+
+	// Load the Visualization API and the piechart package.
+	google.charts.load('current', {
+		'packages' : [ 'corechart' ]
+	});
+	var st=0;
+	var et=0;var st1=0;var et1=0;
+    function RunTimer(){ 
+    	var today = new Date() // 현재시간 얻기 
+    	var RunTime = today.getTime(); // 밀리초 from 1/1/70 
+    	return RunTime; 
+		}
+	// Set a callback to run when the Google Visualization API is loaded.
+	
+	google.charts.setOnLoadCallback(drawChart);
+	
+
+	function drawChart() {
+		var data;
+		var step=0;
+		var jsonArr=new Array();
+		for(var i=0;i<200;i++){
+			jsonArr[i]=[-199+i,0,0,0];
+		}
+
+		var data = new google.visualization.DataTable();
+		data.addColumn('number', 'Order');
+		data.addColumn('number', 'Predict Values');
+		data.addColumn('number', 'Target Values');
+		data.addColumn('number', 'AbnormalFlag');
+		data.addRows(jsonArr);
+	
+		
+		var options = {
+			chart : {
+				title : 'Predicted VS Target'
+			},
+			width: 1800,
+			seriesType : 'line',
+			series : {
+				2 : {
+					type : 'bars'
+				}
+			}
+		};
+
+		var chart = new google.visualization.LineChart(document
+				.getElementById('linechart_material'));
+		
+// Create our data table out of JSON data loaded from server.
+		function refreshData(jsonArr, data) {st1=RunTimer();
+			var arr=new Array();
+			
+				if(step!=0){
+					url="getData.php?step="+step;
+				}else{
+						url="getData.php";
+					
+				}
+				var jsonData = $.ajax({
+					url : url,
+					dataType : "json",
+					success: function(dt){
+						$.each(dt.rows[0],function(key,val){
+							jsonArr.shift();
+							jsonArr.push(val);	
+						});
+						 step=dt.step;
+					},
+					async : false
+				}).responseText;
+
+				data.addRow(jsonArr[199]);
+				data.removeRow(0);st=RunTimer();
+				chart.draw(data, options);et=RunTimer(); console.log(et-st+": draw "+(et-st1)+": total ");
+		}
+		refreshData(jsonArr, data);			
+		setInterval(refreshData, 0,jsonArr,data);
+
+		
+		}
+	
+</script>
+</head>
+
+<body>
+	<div id="linechart_material" style="width: 100px; height: 500px"></div>
+</body>
+</html>
